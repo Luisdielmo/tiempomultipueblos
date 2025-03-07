@@ -90,9 +90,18 @@ async function mostrarPredicciones() {
 
   for (let { municipio, codigo } of municipiosGuardados) {
     const data = await obtenerPredicciones(codigo); // Obtener las predicciones
-    if (!data) continue;
 
-    const predicciones = data.prediccion.dia[0].temperatura;  // Predicciones para el municipio
+    // Validamos si los datos son correctos
+    if (!data || !data.prediccion || !data.prediccion.dia) {
+      console.error(`No se encontraron predicciones para el municipio: ${municipio}`);
+      continue;
+    }
+
+    const predicciones = data.prediccion.dia[0]?.temperatura; // Accedemos de forma segura
+    if (!predicciones) {
+      console.warn(`No hay datos de temperatura para ${municipio}`);
+      continue;
+    }
 
     // Crear la fila de la tabla para este municipio
     const row = document.createElement('tr');
@@ -102,14 +111,12 @@ async function mostrarPredicciones() {
     municipioCell.innerText = municipio;
     row.appendChild(municipioCell);
 
-    // Agregar las predicciones de las 24 horas
+    // Agregar las predicciones de temperatura por horas
     predicciones.forEach(prediccion => {
       const cell = document.createElement('td');
       cell.innerHTML = `
-        <strong>${prediccion.periodo}:00</strong><br>
-        Temp: ${prediccion.value}°C<br>
-        Cielo: Despejado<br>
-        Precip: 0 mm
+        <strong>${prediccion.periodo || 'N/A'}:00</strong><br>
+        Temp: ${prediccion.value || 'N/A'}°C<br>
       `;
       row.appendChild(cell);
     });
@@ -118,6 +125,7 @@ async function mostrarPredicciones() {
     tbody.appendChild(row);
   }
 }
+
 
 mostrarPredicciones();
 
