@@ -114,24 +114,52 @@ async function mostrarPredicciones() {
         let rowContent = `<td><a href="${enlace}" target="_blank">${municipio}</a></td>`;
 
         dias.forEach(dia => {
-            const maxTemp = dia.temperatura?.maxima || 'N/A';
-            const minTemp = dia.temperatura?.minima || 'N/A';
-            const estadoCielo = dia.estadoCielo?.[0]?.descripcion || 'N/A';
-            const probPrecip = dia.probPrecipitacion?.[0]?.value ? `${dia.probPrecipitacion[0].value}%` : 'N/A';
-            const viento = dia.vientoAndRachaMax?.velocidad?.[0] ? `${dia.vientoAndRachaMax.velocidad[0]} km/h` : 'N/A';
-            const vientoDir = dia.vientoAndRachaMax?.direccion?.[0] || 'N/A';
+            let contenidoDia = '';
 
-            rowContent += `<td class="weather-cell">
-                🌥️ ${estadoCielo}<br>
-                🌡️ <strong>${minTemp}°C / ${maxTemp}°C</strong><br>
-                💦 <strong>${probPrecip}</strong> de lluvia<br>
-                💨 ${vientoDir} ${viento}
-            </td>`;
+            // Dividimos la información en intervalos horarios
+            const bloquesHorarios = [
+                { rango: '00–06 h', temp: null, cielo: null },
+                { rango: '06–12 h', temp: null, cielo: null },
+                { rango: '12–18 h', temp: null, cielo: null },
+                { rango: '18–24 h', temp: null, cielo: null }
+            ];
+
+            // Procesamos la información de temperatura y estado del cielo
+            if (dia.temperatura) {
+                dia.temperatura.forEach(temp => {
+                    const hora = parseInt(temp.periodo);
+                    if (hora >= 0 && hora < 6) bloquesHorarios[0].temp = temp.value;
+                    else if (hora >= 6 && hora < 12) bloquesHorarios[1].temp = temp.value;
+                    else if (hora >= 12 && hora < 18) bloquesHorarios[2].temp = temp.value;
+                    else if (hora >= 18 && hora < 24) bloquesHorarios[3].temp = temp.value;
+                });
+            }
+
+            if (dia.estadoCielo) {
+                dia.estadoCielo.forEach(cielo => {
+                    const hora = parseInt(cielo.periodo);
+                    if (hora >= 0 && hora < 6) bloquesHorarios[0].cielo = cielo.descripcion;
+                    else if (hora >= 6 && hora < 12) bloquesHorarios[1].cielo = cielo.descripcion;
+                    else if (hora >= 12 && hora < 18) bloquesHorarios[2].cielo = cielo.descripcion;
+                    else if (hora >= 18 && hora < 24) bloquesHorarios[3].cielo = cielo.descripcion;
+                });
+            }
+
+            // Construimos la celda con los bloques horarios
+            bloquesHorarios.forEach(bloque => {
+                contenidoDia += `<strong>${bloque.rango}</strong><br>`;
+                contenidoDia += bloque.cielo ? `${bloque.cielo}<br>` : 'N/A<br>';
+                contenidoDia += bloque.temp ? `🌡️ ${bloque.temp}°C<br>` : '🌡️ N/A<br>';
+                contenidoDia += '<br>'; // Espacio entre bloques
+            });
+
+            rowContent += `<td class="weather-cell">${contenidoDia}</td>`;
         });
 
         row.innerHTML = rowContent;
         tbody.appendChild(row);
     });
 }
+
 
 
