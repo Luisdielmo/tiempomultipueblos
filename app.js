@@ -23,9 +23,9 @@ async function obtenerMunicipios() {
 
         return data.records.map(record => ({
             id: record.id,
-            municipio: record.fields.Municipio, // 📌 Asegúrate de que los nombres coinciden con Airtable
-            codigo: record.fields.Código,      // 📌 Si el campo en Airtable es "Código", respeta mayúsculas
-            enlace: record.fields.Enlace
+            municipio: record.fields.municipio,  // ✅ Ahora coincide con Airtable
+            codigo: record.fields.codigo,        // ✅ Ahora coincide con Airtable
+            enlace: record.fields.enlace         // ✅ Ahora coincide con Airtable
         }));
     } catch (error) {
         console.error("Error obteniendo municipios desde Airtable:", error);
