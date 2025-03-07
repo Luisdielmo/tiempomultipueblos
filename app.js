@@ -118,15 +118,30 @@ async function mostrarPredicciones() {
             const minTemp = dia.temperatura?.minima || 'N/A';
             const estadoCielo = dia.estadoCielo?.[0]?.descripcion || 'N/A';
             const probPrecip = dia.probPrecipitacion?.[0]?.value ? `${dia.probPrecipitacion[0].value}%` : 'N/A';
-            const viento = dia.vientoAndRachaMax?.velocidad?.[0] ? `${dia.vientoAndRachaMax.velocidad[0]} km/h` : 'N/A';
-            const vientoDir = dia.vientoAndRachaMax?.direccion?.[0] || 'N/A';
-            const rachaMax = dia.vientoAndRachaMax?.value ? `${dia.vientoAndRachaMax.value} km/h` : 'N/A';
+
+            // 🛠️ **Corrección en la extracción del viento**
+            let vientoDir = 'N/A';
+            let vientoVel = 'N/A';
+            let rachaMax = 'N/A';
+
+            if (dia.vientoAndRachaMax) {
+                // Extraer dirección y velocidad del viento
+                if (Array.isArray(dia.vientoAndRachaMax)) {
+                    vientoDir = dia.vientoAndRachaMax[0]?.direccion || 'N/A';
+                    vientoVel = dia.vientoAndRachaMax[0]?.velocidad ? `${dia.vientoAndRachaMax[0].velocidad} km/h` : 'N/A';
+                    rachaMax = dia.vientoAndRachaMax[0]?.rachaMax ? `${dia.vientoAndRachaMax[0].rachaMax} km/h` : 'N/A';
+                } else {
+                    vientoDir = dia.vientoAndRachaMax.direccion ? dia.vientoAndRachaMax.direccion[0] || 'N/A' : 'N/A';
+                    vientoVel = dia.vientoAndRachaMax.velocidad ? `${dia.vientoAndRachaMax.velocidad[0]} km/h` : 'N/A';
+                    rachaMax = dia.vientoAndRachaMax.value ? `${dia.vientoAndRachaMax.value} km/h` : 'N/A';
+                }
+            }
 
             rowContent += `<td class="weather-cell">
                 🌥️ ${estadoCielo}<br>
                 🌡️ <strong>${minTemp}°C / ${maxTemp}°C</strong><br>
                 💦 <strong>${probPrecip}</strong> de lluvia<br>
-                💨 <strong>${vientoDir} ${viento}</strong> (racha: ${rachaMax})
+                💨 <strong>${vientoDir} ${vientoVel}</strong> (racha: ${rachaMax})
             </td>`;
         });
 
@@ -134,7 +149,6 @@ async function mostrarPredicciones() {
         tbody.appendChild(row);
     });
 }
-
 
 
 
