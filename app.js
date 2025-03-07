@@ -109,11 +109,19 @@ async function mostrarPredicciones() {
         let rowContent = `<td><a href="${enlace}" target="_blank">${municipio}</a></td>`;
 
         dias.forEach(dia => {
+            const maxTemp = dia.temperatura?.maxima || 'N/A';
+            const minTemp = dia.temperatura?.minima || 'N/A';
+            const precipitacion = dia.precipitacion ? `${dia.precipitacion} mm` : '0 mm';
+            const probPrecip = dia.probPrecipitacion?.[0]?.value ? `${dia.probPrecipitacion[0].value}%` : 'N/A';
+            const viento = dia.vientoAndRachaMax?.velocidad?.[0] ? `${dia.vientoAndRachaMax.velocidad[0]} km/h` : 'N/A';
+            const vientoDir = dia.vientoAndRachaMax?.direccion?.[0] || 'N/A';
+            const estadoCielo = dia.estadoCielo?.[0]?.descripcion || 'N/A';
+
             rowContent += `<td class="weather-cell">
-                <strong>Máx:</strong> ${dia.temperatura?.maxima || 'N/A'}°C<br>
-                <strong>Mín:</strong> ${dia.temperatura?.minima || 'N/A'}°C<br>
-                <strong>Precip.:</strong> ${dia.precipitacion || 'N/A'} mm<br>
-                <strong>Viento:</strong> ${dia.vientoAndRachaMax?.direccion?.[0] || 'N/A'} ${dia.vientoAndRachaMax?.velocidad?.[0] || 'N/A'} km/h
+                🌡️ ${maxTemp}°C / ${minTemp}°C<br>
+                ☔ ${precipitacion} (${probPrecip})<br>
+                💨 ${viento} (${vientoDir})<br>
+                🌥️ ${estadoCielo}
             </td>`;
         });
 
@@ -121,3 +129,4 @@ async function mostrarPredicciones() {
         tbody.appendChild(row);
     });
 }
+
