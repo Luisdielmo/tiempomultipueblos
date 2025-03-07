@@ -55,9 +55,9 @@ async function agregarMunicipioDesdeURL() {
                     records: [
                         {
                             fields: {
-                                "Municipio": municipio,  // 📌 Asegúrate de que los nombres coincidan con Airtable
-                                "Código": codigo,        // 📌 Se envía como número entero (no texto)
-                                "Enlace": enlace         // 📌 URL del municipio en AEMET
+                                "municipio": municipio,  // 📌 Asegúrate de que los nombres coincidan con Airtable
+                                "codigo": codigo,        // 📌 Se envía como número entero (no texto)
+                                "enlace": enlace         // 📌 URL del municipio en AEMET
                             }
                         }
                     ]
