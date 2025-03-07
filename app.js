@@ -1,4 +1,4 @@
-// app.js - Nueva versión optimizada
+// app.js - Nueva versión optimizada y corregida
 
 // Almacenamos los municipios seleccionados en localStorage
 let municipiosGuardados = JSON.parse(localStorage.getItem("municipios")) || [];
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Función para agregar un municipio desde una URL de AEMET
 function agregarMunicipioDesdeURL() {
     const url = document.getElementById('municipio-url').value.trim();
-    const regex = /\/municipios\/([a-zA-Z0-9-]+)-id(\d+)/; // Regex para extraer el ID y nombre del municipio
+    const regex = /\/municipios\/([a-zA-Z0-9-]+)-id(\d+)/;
     const match = url.match(regex);
 
     if (match) {
@@ -22,6 +22,7 @@ function agregarMunicipioDesdeURL() {
             municipiosGuardados.push({ municipio, codigo: idMunicipio });
             localStorage.setItem("municipios", JSON.stringify(municipiosGuardados));
             mostrarMunicipios();
+            mostrarPredicciones();
         } else {
             alert("Este municipio ya está en la lista.");
         }
@@ -58,7 +59,11 @@ async function obtenerPredicciones(codigo) {
         
         const response = await fetch(baseUrl);
         const data = await response.json();
-        if (!data || !data.datos) throw new Error('No se encontró la URL de los datos.');
+        
+        if (!data || !data.datos) {
+            console.error(`No se encontró la URL de los datos para ${codigo}`);
+            return null;
+        }
         
         const weatherResponse = await fetch(data.datos);
         const weatherData = await weatherResponse.json();
@@ -76,13 +81,21 @@ async function mostrarPredicciones() {
     
     const predicciones = await Promise.all(municipiosGuardados.map(async ({ municipio, codigo }) => {
         const data = await obtenerPredicciones(codigo);
-        if (!data || !data.prediccion || !data.prediccion.dia) return null;
+        if (!data || !data.prediccion || !data.prediccion.dia) {
+            console.warn(`No se encontraron datos válidos para ${municipio}`);
+            return null;
+        }
         return { municipio, temperatura: data.prediccion.dia[0]?.temperatura || [] };
     }));
     
     predicciones.filter(Boolean).forEach(({ municipio, temperatura }) => {
         const row = document.createElement('tr');
-        row.innerHTML = `<td>${municipio}</td>` + temperatura.map(t => `<td>${t.value || 'N/A'}°C</td>`).join('');
+        let rowContent = `<td>${municipio}</td>`;
+        for (let i = 0; i < 24; i++) {
+            const temp = temperatura.find(t => parseInt(t.periodo) === i);
+            rowContent += `<td>${temp ? temp.value + '°C' : 'N/A'}</td>`;
+        }
+        row.innerHTML = rowContent;
         tbody.appendChild(row);
     });
 }
