@@ -178,16 +178,14 @@ async function mostrarPredicciones() {
             </td>`;
         });
 
-
-// Cargar municipios al iniciar la página
-document.addEventListener("DOMContentLoaded", () => {
-    mostrarMunicipios();  // 📡 Carga inicial desde Airtable
-});
-
-
-        
+      
 
         row.innerHTML = rowContent;
         tbody.appendChild(row);
     });
 }
+
+// Cargar municipios al iniciar la página
+document.addEventListener("DOMContentLoaded", () => {
+    mostrarMunicipios();  // 📡 Carga inicial desde Airtable
+});
