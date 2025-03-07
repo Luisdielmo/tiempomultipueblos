@@ -142,9 +142,7 @@ async function mostrarPredicciones() {
     const tbody = document.getElementById('weather-tbody');
     tbody.innerHTML = '';
 
-    const municipios = await obtenerMunicipios();
-
-    const predicciones = await Promise.all(municipios.map(async ({ municipio, codigo, enlace }) => {
+    const predicciones = await Promise.all(municipiosGuardados.map(async ({ municipio, codigo, enlace }) => {
         const data = await obtenerPredicciones(codigo);
         if (!data || !Array.isArray(data) || !data[0]?.prediccion?.dia) return null;
         return { municipio, enlace, dias: data[0].prediccion.dia };
@@ -162,28 +160,28 @@ async function mostrarPredicciones() {
         let rowContent = `<td><a href="${enlace}" target="_blank">${municipio}</a></td>`;
 
         dias.forEach(dia => {
-            const maxTemp = dia.temperatura?.maxima || 'N/A';
-            const minTemp = dia.temperatura?.minima || 'N/A';
+            const maxTemp = dia.temperatura?.maxima ? `${dia.temperatura.maxima}°C` : 'N/A';
+            const minTemp = dia.temperatura?.minima ? `${dia.temperatura.minima}°C` : 'N/A';
             const estadoCielo = dia.estadoCielo?.[0]?.descripcion || 'N/A';
             const probPrecip = dia.probPrecipitacion?.[0]?.value ? `${dia.probPrecipitacion[0].value}%` : 'N/A';
             const viento = dia.vientoAndRachaMax?.velocidad?.[0] ? `${dia.vientoAndRachaMax.velocidad[0]} km/h` : 'N/A';
             const vientoDir = dia.vientoAndRachaMax?.direccion?.[0] || 'N/A';
             const rachaMax = dia.vientoAndRachaMax?.value ? `${dia.vientoAndRachaMax.value} km/h` : 'N/A';
 
+            // ✅ Ahora cada dato está en una nueva línea, con el icono y su valor en la misma línea
             rowContent += `<td class="weather-cell">
-                🌥️ ${estadoCielo}<br>
-                🌡️ <strong>${minTemp}°C / ${maxTemp}°C</strong><br>
-                💦 <strong>${probPrecip}</strong> de lluvia<br>
-                💨 <strong>${vientoDir} ${viento}</strong> (racha: ${rachaMax})
+                🌥️ ${estadoCielo} <br>
+                🌡️ ${minTemp} / ${maxTemp} <br>
+                💦 ${probPrecip} <br>
+                💨 ${vientoDir} ${viento} (racha: ${rachaMax})
             </td>`;
         });
-
-      
 
         row.innerHTML = rowContent;
         tbody.appendChild(row);
     });
 }
+
 
 // Cargar municipios al iniciar la página
 document.addEventListener("DOMContentLoaded", () => {
