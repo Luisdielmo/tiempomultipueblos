@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Predicciones Meteorológicas</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="app.js" defer></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -23,36 +23,15 @@
     <div id="municipios-list"></div>
   </div>
 
-  <!-- Tabla para mostrar las predicciones -->
+  <!-- Tabla para mostrar las predicciones diarias -->
   <div id="weather-container">
     <table id="weather-table">
       <thead>
         <tr>
           <th>Municipio</th>
-          <th>00:00</th>
-          <th>01:00</th>
-          <th>02:00</th>
-          <th>03:00</th>
-          <th>04:00</th>
-          <th>05:00</th>
-          <th>06:00</th>
-          <th>07:00</th>
-          <th>08:00</th>
-          <th>09:00</th>
-          <th>10:00</th>
-          <th>11:00</th>
-          <th>12:00</th>
-          <th>13:00</th>
-          <th>14:00</th>
-          <th>15:00</th>
-          <th>16:00</th>
-          <th>17:00</th>
-          <th>18:00</th>
-          <th>19:00</th>
-          <th>20:00</th>
-          <th>21:00</th>
-          <th>22:00</th>
-          <th>23:00</th>
+          <th>Fecha</th>
+          <th>Temp. Máxima</th>
+          <th>Temp. Mínima</th>
         </tr>
       </thead>
       <tbody id="weather-tbody">
@@ -60,7 +39,5 @@
       </tbody>
     </table>
   </div>
-
-  <script src="app.js"></script>
 </body>
 </html>
