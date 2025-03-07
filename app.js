@@ -1,4 +1,4 @@
-// app.js - Nueva versión optimizada y corregida con mejor manejo de errores
+// app.js - Nueva versión optimizada y corregida con mejor manejo de errores y exportación de datos
 
 // Almacenamos los municipios seleccionados en localStorage
 let municipiosGuardados = JSON.parse(localStorage.getItem("municipios")) || [];
@@ -69,35 +69,19 @@ async function obtenerPredicciones(codigo) {
         const weatherData = await weatherResponse.json();
         
         console.log(`Datos recibidos para ${codigo}:`, weatherData);
+        
+        // Crear y descargar archivo JSON con los datos
+        const blob = new Blob([JSON.stringify(weatherData, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `datos_${codigo}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
         return weatherData;
     } catch (error) {
         console.error(`Error obteniendo predicciones para ${codigo}:`, error);
         return null;
     }
-}
-
-// Función para mostrar las predicciones
-async function mostrarPredicciones() {
-    const tbody = document.getElementById('weather-tbody');
-    tbody.innerHTML = '';
-    
-    const predicciones = await Promise.all(municipiosGuardados.map(async ({ municipio, codigo }) => {
-        const data = await obtenerPredicciones(codigo);
-        if (!data || !data.prediccion || !data.prediccion.dia || !data.prediccion.dia.length) {
-            console.warn(`No se encontraron datos válidos para ${municipio}`);
-            return null;
-        }
-        return { municipio, temperatura: data.prediccion.dia[0]?.temperatura || [] };
-    }));
-    
-    predicciones.filter(Boolean).forEach(({ municipio, temperatura }) => {
-        const row = document.createElement('tr');
-        let rowContent = `<td>${municipio}</td>`;
-        for (let i = 0; i < 24; i++) {
-            const temp = temperatura.find(t => parseInt(t.periodo) === i);
-            rowContent += `<td>${temp ? temp.value + '°C' : 'N/A'}</td>`;
-        }
-        row.innerHTML = rowContent;
-        tbody.appendChild(row);
-    });
 }
