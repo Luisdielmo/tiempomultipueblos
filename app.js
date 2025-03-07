@@ -37,7 +37,6 @@ async function agregarMunicipioDesdeURL() {
         const codigo = match[2];
         const enlace = `https://www.aemet.es/es/eltiempo/prediccion/municipios/${municipio}-id${codigo}`;
 
-        // 🔍 Verificar qué datos estamos enviando
         console.log("Enviando a Airtable:", { municipio, codigo, enlace });
 
         try {
@@ -45,7 +44,7 @@ async function agregarMunicipioDesdeURL() {
                 method: "POST",
                 headers,
                 body: JSON.stringify({
-                    records: [  // 🔄 Airtable requiere que los datos vayan dentro de un array
+                    records: [
                         {
                             fields: {
                                 municipio: municipio,
@@ -58,12 +57,10 @@ async function agregarMunicipioDesdeURL() {
             });
 
             const data = await response.json();
-
-            // 🔍 Mostrar respuesta de Airtable en consola
-            console.log("Respuesta de Airtable:", data);
+            console.log("Respuesta completa de Airtable:", data);
 
             if (!response.ok) {
-                throw new Error(`Error al guardar en Airtable: ${data.error?.message || response.statusText}`);
+                throw new Error(`Error en Airtable: ${JSON.stringify(data)}`);
             }
 
             mostrarMunicipios(); // Recargar la lista
