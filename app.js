@@ -14,17 +14,25 @@ async function obtenerMunicipios() {
     try {
         const response = await fetch(AIRTABLE_URL, { headers });
         const data = await response.json();
+
+        console.log("Respuesta de Airtable en obtenerMunicipios:", data); // 🔍 Debugging
+
+        if (!data.records) {
+            throw new Error("No se encontraron registros en Airtable.");
+        }
+
         return data.records.map(record => ({
             id: record.id,
-            municipio: record.fields.municipio,
-            codigo: record.fields.codigo,
-            enlace: record.fields.enlace
+            municipio: record.fields.Municipio, // 📌 Asegúrate de que los nombres coinciden con Airtable
+            codigo: record.fields.Código,      // 📌 Si el campo en Airtable es "Código", respeta mayúsculas
+            enlace: record.fields.Enlace
         }));
     } catch (error) {
         console.error("Error obteniendo municipios desde Airtable:", error);
         return [];
     }
 }
+
 
 // 📤 Agregar municipio a Airtable
 async function agregarMunicipioDesdeURL() {
