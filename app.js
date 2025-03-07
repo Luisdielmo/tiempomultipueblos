@@ -1,4 +1,4 @@
-// app.js - Nueva versión optimizada y corregida
+// app.js - Nueva versión optimizada y corregida con mejor manejo de errores
 
 // Almacenamos los municipios seleccionados en localStorage
 let municipiosGuardados = JSON.parse(localStorage.getItem("municipios")) || [];
@@ -67,6 +67,8 @@ async function obtenerPredicciones(codigo) {
         
         const weatherResponse = await fetch(data.datos);
         const weatherData = await weatherResponse.json();
+        
+        console.log(`Datos recibidos para ${codigo}:`, weatherData);
         return weatherData;
     } catch (error) {
         console.error(`Error obteniendo predicciones para ${codigo}:`, error);
@@ -81,7 +83,7 @@ async function mostrarPredicciones() {
     
     const predicciones = await Promise.all(municipiosGuardados.map(async ({ municipio, codigo }) => {
         const data = await obtenerPredicciones(codigo);
-        if (!data || !data.prediccion || !data.prediccion.dia) {
+        if (!data || !data.prediccion || !data.prediccion.dia || !data.prediccion.dia.length) {
             console.warn(`No se encontraron datos válidos para ${municipio}`);
             return null;
         }
