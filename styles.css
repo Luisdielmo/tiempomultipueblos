@@ -25,6 +25,7 @@ table {
   margin-top: 20px;
   border-collapse: collapse;
   background-color: white;
+  table-layout: fixed;
 }
 
 table, th, td {
@@ -34,6 +35,7 @@ table, th, td {
 th, td {
   padding: 10px;
   text-align: center;
+  word-wrap: break-word;
 }
 
 th {
@@ -79,4 +81,16 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+
+/* Estilo para el contenido de cada celda con múltiples valores */
+.weather-cell {
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 5px;
+}
+
+.weather-cell strong {
+  display: block;
+  color: #333;
 }
