@@ -56,75 +56,41 @@ mostrarMunicipios();
 // Función para obtener las predicciones de un municipio
 async function obtenerPredicciones(codigo) {
   try {
-    // API de AEMET para obtener las predicciones meteorológicas
     const apiKey = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsdWlzQGRpZWxtby5jb20iLCJqdGkiOiJjMzcwM2RhMy01ZjZhLTRiNWItODU4OS1hYmE3YWYxYmRlZDUiLCJpc3MiOiJBRU1FVCIsImlhdCI6MTczMjcxOTIxMSwidXNlcklkIjoiYzM3MDNkYTMtNWY2YS00YjViLTg1ODktYWJhN2FmMWJkZWQ1Iiwicm9sZSI6IiJ9.VgdhLRbZQc9BzO0sisvLboljXfiHTBtNk2sHDB5Akqo';
     const baseUrl = 'https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/';
     const url = `${baseUrl}${codigo}/?api_key=${apiKey}`;
 
-    // Usamos un proxy para evitar problemas de CORS
-    const proxyUrl = 'https://api.allorigins.win/get?url=';  // Proxy para evitar problemas de CORS
+    // Proxy para evitar problemas de CORS
+    const proxyUrl = 'https://api.allorigins.win/get?url=';
+    console.log(`Haciendo petición a: ${proxyUrl + encodeURIComponent(url)}`);
+
     const response = await fetch(proxyUrl + encodeURIComponent(url));
     const data = await response.json();
 
-    // Verificar si la respuesta contiene la URL de los datos
+    console.log("Respuesta de la API (Paso 1):", data);
+
+    // Verificamos si la respuesta contiene la URL con los datos reales
     if (!data.contents) {
-      throw new Error('No se encontró la URL de los datos de predicción');
+      console.error("No se encontró la URL de los datos de predicción.");
+      return null;
     }
 
-    // Obtener los datos meteorológicos desde la URL proporcionada
     const dataUrl = JSON.parse(data.contents).datos;
+    console.log(`URL de datos obtenida: ${dataUrl}`);
+
+    // Hacemos la segunda petición para obtener los datos meteorológicos reales
     const weatherResponse = await fetch(dataUrl);
     const weatherData = await weatherResponse.json();
 
-    return weatherData; // Datos reales de la predicción
+    console.log("Datos de predicción recibidos:", weatherData);
+    return weatherData;
+
   } catch (error) {
     console.error('Error al obtener las predicciones:', error);
-    return null; // Si hay error, devuelve null
+    return null;
   }
 }
 
-// Función para mostrar las predicciones de cada municipio en la tabla
-async function mostrarPredicciones() {
-  const tbody = document.getElementById('weather-tbody');
-  tbody.innerHTML = ''; // Limpiar la tabla antes de agregar nuevos datos
-
-  for (let { municipio, codigo } of municipiosGuardados) {
-    const data = await obtenerPredicciones(codigo); // Obtener las predicciones
-
-    // Validamos si los datos son correctos
-    if (!data || !data.prediccion || !data.prediccion.dia) {
-      console.error(`No se encontraron predicciones para el municipio: ${municipio}`);
-      continue;
-    }
-
-    const predicciones = data.prediccion.dia[0]?.temperatura; // Accedemos de forma segura
-    if (!predicciones) {
-      console.warn(`No hay datos de temperatura para ${municipio}`);
-      continue;
-    }
-
-    // Crear la fila de la tabla para este municipio
-    const row = document.createElement('tr');
-
-    // Columna para el nombre del municipio
-    const municipioCell = document.createElement('td');
-    municipioCell.innerText = municipio;
-    row.appendChild(municipioCell);
-
-    // Agregar las predicciones de temperatura por horas
-    predicciones.forEach(prediccion => {
-      const cell = document.createElement('td');
-      cell.innerHTML = `
-        <strong>${prediccion.periodo || 'N/A'}:00</strong><br>
-        Temp: ${prediccion.value || 'N/A'}°C<br>
-      `;
-      row.appendChild(cell);
-    });
-
-    // Agregar la fila a la tabla
-    tbody.appendChild(row);
-  }
-}
 
 
 mostrarPredicciones();
