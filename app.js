@@ -1,4 +1,4 @@
-// app.js - Corrección para acceder correctamente a la estructura del JSON de AEMET
+// app.js - Corrección para mostrar correctamente los valores de temperatura
 
 // Almacenamos los municipios seleccionados en localStorage
 let municipiosGuardados = JSON.parse(localStorage.getItem("municipios")) || [];
@@ -69,6 +69,7 @@ async function obtenerPredicciones(codigo) {
         const weatherData = await weatherResponse.json();
         
         console.log(`Datos recibidos para ${codigo}:`, weatherData);
+        
         return weatherData;
     } catch (error) {
         console.error(`Error obteniendo predicciones para ${codigo}:`, error);
@@ -95,7 +96,7 @@ async function mostrarPredicciones() {
         let rowContent = `<td>${municipio}</td>`;
         for (let i = 0; i < 24; i++) {
             const temp = temperatura.find(t => parseInt(t.periodo) === i);
-            rowContent += `<td>${temp ? temp.value + '°C' : 'N/A'}</td>`;
+            rowContent += `<td>${temp && temp.value !== undefined ? temp.value + '°C' : 'N/A'}</td>`;
         }
         row.innerHTML = rowContent;
         tbody.appendChild(row);
