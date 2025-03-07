@@ -99,8 +99,13 @@ async function mostrarPredicciones() {
         return { municipio, enlace, dias: data[0].prediccion.dia };
     }));
 
-    // Obtener fechas únicas para la cabecera
-    const diasUnicos = predicciones.filter(Boolean)[0]?.dias.map(d => d.fecha) || [];
+    // Obtener fechas únicas y convertirlas en nombres de días de la semana
+    const diasUnicos = predicciones.filter(Boolean)[0]?.dias.map(d => {
+        const fecha = new Date(d.fecha);
+        return `${fecha.toLocaleDateString('es-ES', { weekday: 'short' })} ${fecha.getDate()}`;
+    }) || [];
+
+    // Actualizar encabezado de la tabla con los días
     thead.innerHTML = `<th>Municipio</th>` + diasUnicos.map(d => `<th>${d}</th>`).join('');
 
     // Rellenar filas con la información meteorológica
@@ -111,17 +116,16 @@ async function mostrarPredicciones() {
         dias.forEach(dia => {
             const maxTemp = dia.temperatura?.maxima || 'N/A';
             const minTemp = dia.temperatura?.minima || 'N/A';
-            const precipitacion = dia.precipitacion ? `${dia.precipitacion} mm` : '0 mm';
+            const estadoCielo = dia.estadoCielo?.[0]?.descripcion || 'N/A';
             const probPrecip = dia.probPrecipitacion?.[0]?.value ? `${dia.probPrecipitacion[0].value}%` : 'N/A';
             const viento = dia.vientoAndRachaMax?.velocidad?.[0] ? `${dia.vientoAndRachaMax.velocidad[0]} km/h` : 'N/A';
             const vientoDir = dia.vientoAndRachaMax?.direccion?.[0] || 'N/A';
-            const estadoCielo = dia.estadoCielo?.[0]?.descripcion || 'N/A';
 
             rowContent += `<td class="weather-cell">
-                🌡️ ${maxTemp}°C / ${minTemp}°C<br>
-                ☔ ${precipitacion} (${probPrecip})<br>
-                💨 ${viento} (${vientoDir})<br>
-                🌥️ ${estadoCielo}
+                🌥️ ${estadoCielo}<br>
+                🌡️ <strong>${minTemp}°C / ${maxTemp}°C</strong><br>
+                💦 <strong>${probPrecip}</strong> de lluvia<br>
+                💨 ${vientoDir} ${viento}
             </td>`;
         });
 
@@ -129,4 +133,5 @@ async function mostrarPredicciones() {
         tbody.appendChild(row);
     });
 }
+
 
