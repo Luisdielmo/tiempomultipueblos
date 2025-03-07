@@ -1,5 +1,3 @@
-// app.js - Modificación para previsiones diarias y enlaces en nombres de municipios
-
 // Almacenamos los municipios seleccionados en localStorage
 let municipiosGuardados = JSON.parse(localStorage.getItem("municipios")) || [];
 
@@ -56,7 +54,7 @@ function eliminarMunicipio(codigo) {
 // Función para obtener las predicciones diarias de un municipio
 async function obtenerPredicciones(codigo) {
     try {
-        const apiKey = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsdWlzQGRpZWxtby5jb20iLCJqdGkiOiJjMzcwM2RhMy01ZjZhLTRiNWItODU4OS1hYmE3YWYxYmRlZDUiLCJpc3MiOiJBRU1FVCIsImlhdCI6MTczMjcxOTIxMSwidXNlcklkIjoiYzM3MDNkYTMtNWY2YS00YjViLTg1ODktYWJhN2FmMWJkZWQ1Iiwicm9sZSI6IiJ9.VgdhLRbZQc9BzO0sisvLboljXfiHTBtNk2sHDB5Akqo';
+        const apiKey = 'TU_API_KEY';
         const baseUrl = `https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/${codigo}/?api_key=${apiKey}`;
         
         const response = await fetch(baseUrl);
@@ -78,11 +76,12 @@ async function obtenerPredicciones(codigo) {
     }
 }
 
-// Función para mostrar las predicciones diarias
+// Función para mostrar las predicciones en la tabla
 async function mostrarPredicciones() {
+    const thead = document.getElementById('weather-header-row');
     const tbody = document.getElementById('weather-tbody');
     tbody.innerHTML = '';
-    
+
     const predicciones = await Promise.all(municipiosGuardados.map(async ({ municipio, codigo, enlace }) => {
         const data = await obtenerPredicciones(codigo);
         if (!data || !Array.isArray(data) || !data[0]?.prediccion?.dia) {
@@ -91,16 +90,23 @@ async function mostrarPredicciones() {
         }
         return { municipio, enlace, dias: data[0].prediccion.dia };
     }));
-    
+
+    const diasUnicos = predicciones.filter(Boolean)[0]?.dias.map(d => d.fecha) || [];
+    thead.innerHTML = `<th>Municipio</th>` + diasUnicos.map(d => `<th>${d}</th>`).join('');
+
     predicciones.filter(Boolean).forEach(({ municipio, enlace, dias }) => {
+        const row = document.createElement('tr');
+        let rowContent = `<td><a href="${enlace}" target="_blank">${municipio}</a></td>`;
+
         dias.forEach(dia => {
-            const row = document.createElement('tr');
-            let rowContent = `<td><a href="${enlace}" target="_blank">${municipio}</a></td>`;
-            rowContent += `<td>${dia.fecha}</td>`;
-            rowContent += `<td>${dia.temperatura?.maxima || 'N/A'}°C</td>`;
-            rowContent += `<td>${dia.temperatura?.minima || 'N/A'}°C</td>`;
-            row.innerHTML = rowContent;
-            tbody.appendChild(row);
+            rowContent += `<td class="weather-cell">
+                <strong>Máx:</strong> ${dia.temperatura?.maxima || 'N/A'}°C<br>
+                <strong>Mín:</strong> ${dia.temperatura?.minima || 'N/A'}°C<br>
+                <strong>Precip.:</strong> ${dia.precipitacion || 'N/A'} mm<br>
+            </td>`;
         });
+
+        row.innerHTML = rowContent;
+        tbody.appendChild(row);
     });
 }
