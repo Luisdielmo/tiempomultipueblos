@@ -1,9 +1,10 @@
-// app.js - Corrección para mostrar correctamente los valores de temperatura
+// app.js - Modificación para previsiones diarias y enlaces en nombres de municipios
 
 // Almacenamos los municipios seleccionados en localStorage
 let municipiosGuardados = JSON.parse(localStorage.getItem("municipios")) || [];
 
 document.addEventListener("DOMContentLoaded", () => {
+    localStorage.removeItem("municipios"); // Forzar actualización cada recarga
     mostrarMunicipios();
     mostrarPredicciones();
 });
@@ -17,9 +18,10 @@ function agregarMunicipioDesdeURL() {
     if (match) {
         const municipio = match[1];
         const idMunicipio = match[2];
+        const enlace = `https://www.aemet.es/es/eltiempo/prediccion/municipios/${municipio}-id${idMunicipio}`;
 
         if (!municipiosGuardados.some(m => m.codigo === idMunicipio)) {
-            municipiosGuardados.push({ municipio, codigo: idMunicipio });
+            municipiosGuardados.push({ municipio, codigo: idMunicipio, enlace });
             localStorage.setItem("municipios", JSON.stringify(municipiosGuardados));
             mostrarMunicipios();
             mostrarPredicciones();
@@ -36,9 +38,9 @@ function agregarMunicipioDesdeURL() {
 function mostrarMunicipios() {
     const container = document.getElementById('municipios-list');
     container.innerHTML = '';
-    municipiosGuardados.forEach(({ municipio, codigo }) => {
+    municipiosGuardados.forEach(({ municipio, codigo, enlace }) => {
         const div = document.createElement('div');
-        div.innerHTML = `<span>${municipio}</span> <button onclick="eliminarMunicipio('${codigo}')">Eliminar</button>`;
+        div.innerHTML = `<a href="${enlace}" target="_blank">${municipio}</a> <button onclick="eliminarMunicipio('${codigo}')">Eliminar</button>`;
         container.appendChild(div);
     });
 }
@@ -51,11 +53,11 @@ function eliminarMunicipio(codigo) {
     mostrarPredicciones();
 }
 
-// Función para obtener las predicciones de un municipio
+// Función para obtener las predicciones diarias de un municipio
 async function obtenerPredicciones(codigo) {
     try {
         const apiKey = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsdWlzQGRpZWxtby5jb20iLCJqdGkiOiJjMzcwM2RhMy01ZjZhLTRiNWItODU4OS1hYmE3YWYxYmRlZDUiLCJpc3MiOiJBRU1FVCIsImlhdCI6MTczMjcxOTIxMSwidXNlcklkIjoiYzM3MDNkYTMtNWY2YS00YjViLTg1ODktYWJhN2FmMWJkZWQ1Iiwicm9sZSI6IiJ9.VgdhLRbZQc9BzO0sisvLboljXfiHTBtNk2sHDB5Akqo';
-        const baseUrl = `https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/${codigo}/?api_key=${apiKey}`;
+        const baseUrl = `https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/${codigo}/?api_key=${apiKey}`;
         
         const response = await fetch(baseUrl);
         const data = await response.json();
@@ -69,7 +71,6 @@ async function obtenerPredicciones(codigo) {
         const weatherData = await weatherResponse.json();
         
         console.log(`Datos recibidos para ${codigo}:`, weatherData);
-        
         return weatherData;
     } catch (error) {
         console.error(`Error obteniendo predicciones para ${codigo}:`, error);
@@ -77,28 +78,29 @@ async function obtenerPredicciones(codigo) {
     }
 }
 
-// Función para mostrar las predicciones
+// Función para mostrar las predicciones diarias
 async function mostrarPredicciones() {
     const tbody = document.getElementById('weather-tbody');
     tbody.innerHTML = '';
     
-    const predicciones = await Promise.all(municipiosGuardados.map(async ({ municipio, codigo }) => {
+    const predicciones = await Promise.all(municipiosGuardados.map(async ({ municipio, codigo, enlace }) => {
         const data = await obtenerPredicciones(codigo);
         if (!data || !Array.isArray(data) || !data[0]?.prediccion?.dia) {
             console.warn(`No se encontraron datos válidos para ${municipio}`);
             return null;
         }
-        return { municipio, temperatura: data[0].prediccion.dia[0]?.temperatura || [] };
+        return { municipio, enlace, dias: data[0].prediccion.dia };
     }));
     
-    predicciones.filter(Boolean).forEach(({ municipio, temperatura }) => {
-        const row = document.createElement('tr');
-        let rowContent = `<td>${municipio}</td>`;
-        for (let i = 0; i < 24; i++) {
-            const temp = temperatura.find(t => parseInt(t.periodo) === i);
-            rowContent += `<td>${temp && temp.value !== undefined ? temp.value + '°C' : 'N/A'}</td>`;
-        }
-        row.innerHTML = rowContent;
-        tbody.appendChild(row);
+    predicciones.filter(Boolean).forEach(({ municipio, enlace, dias }) => {
+        dias.forEach(dia => {
+            const row = document.createElement('tr');
+            let rowContent = `<td><a href="${enlace}" target="_blank">${municipio}</a></td>`;
+            rowContent += `<td>${dia.fecha}</td>`;
+            rowContent += `<td>${dia.temperatura?.maxima || 'N/A'}°C</td>`;
+            rowContent += `<td>${dia.temperatura?.minima || 'N/A'}°C</td>`;
+            row.innerHTML = rowContent;
+            tbody.appendChild(row);
+        });
     });
 }
