@@ -142,7 +142,10 @@ async function mostrarPredicciones() {
     const tbody = document.getElementById('weather-tbody');
     tbody.innerHTML = '';
 
-    const predicciones = await Promise.all(municipiosGuardados.map(async ({ municipio, codigo, enlace }) => {
+    // 📡 Obtener municipios desde Airtable
+    const municipios = await obtenerMunicipios();
+
+    const predicciones = await Promise.all(municipios.map(async ({ municipio, codigo, enlace }) => {
         const data = await obtenerPredicciones(codigo);
         if (!data || !Array.isArray(data) || !data[0]?.prediccion?.dia) return null;
         return { municipio, enlace, dias: data[0].prediccion.dia };
@@ -168,7 +171,6 @@ async function mostrarPredicciones() {
             const vientoDir = dia.vientoAndRachaMax?.direccion?.[0] || 'N/A';
             const rachaMax = dia.vientoAndRachaMax?.value ? `${dia.vientoAndRachaMax.value} km/h` : 'N/A';
 
-            // ✅ Ahora cada dato está en una nueva línea, con el icono y su valor en la misma línea
             rowContent += `<td class="weather-cell">
                 🌥️ ${estadoCielo} <br>
                 🌡️ ${minTemp} / ${maxTemp} <br>
@@ -181,6 +183,7 @@ async function mostrarPredicciones() {
         tbody.appendChild(row);
     });
 }
+
 
 
 // Cargar municipios al iniciar la página
