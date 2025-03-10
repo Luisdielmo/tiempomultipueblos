@@ -136,13 +136,11 @@ async function obtenerPredicciones(codigo) {
     }
 }
 
-// 🌦️ Mostrar predicciones en la tabla
 async function mostrarPredicciones() {
     const thead = document.getElementById('weather-header-row');
     const tbody = document.getElementById('weather-tbody');
     tbody.innerHTML = '';
 
-    // 📡 Obtener municipios desde Airtable
     const municipios = await obtenerMunicipios();
 
     const predicciones = await Promise.all(municipios.map(async ({ municipio, codigo, enlace }) => {
@@ -163,19 +161,27 @@ async function mostrarPredicciones() {
         let rowContent = `<td><a href="${enlace}" target="_blank">${municipio}</a></td>`;
 
         dias.forEach(dia => {
-            const maxTemp = dia.temperatura?.maxima ? `${dia.temperatura.maxima}°C` : 'N/A';
-            const minTemp = dia.temperatura?.minima ? `${dia.temperatura.minima}°C` : 'N/A';
-            const estadoCielo = dia.estadoCielo?.[0]?.descripcion || 'N/A';
-            const probPrecip = dia.probPrecipitacion?.[0]?.value ? `${dia.probPrecipitacion[0].value}%` : 'N/A';
-            const viento = dia.vientoAndRachaMax?.velocidad?.[0] ? `${dia.vientoAndRachaMax.velocidad[0]} km/h` : 'N/A';
-            const vientoDir = dia.vientoAndRachaMax?.direccion?.[0] || 'N/A';
-            const rachaMax = dia.vientoAndRachaMax?.value ? `${dia.vientoAndRachaMax.value} km/h` : 'N/A';
+            const maxTemp = dia.temperatura?.maxima ? `${dia.temperatura.maxima}°C` : '';
+            const minTemp = dia.temperatura?.minima ? `${dia.temperatura.minima}°C` : '';
+            const estadoCielo = dia.estadoCielo?.[0]?.descripcion || '';
+            const probPrecip = dia.probPrecipitacion?.[0]?.value ? parseInt(dia.probPrecipitacion[0].value) : null;
+            const viento = dia.vientoAndRachaMax?.velocidad?.[0] ? `${dia.vientoAndRachaMax.velocidad[0]} km/h` : '';
+            const vientoDir = dia.vientoAndRachaMax?.direccion?.[0] || '';
+            const rachaMax = dia.vientoAndRachaMax?.value ? `${dia.vientoAndRachaMax.value} km/h` : '';
 
-            rowContent += `<td class="weather-cell">
-                🌥️ ${estadoCielo} <br>
-                🌡️ ${minTemp} / ${maxTemp} <br>
-                💦 ${probPrecip} <br>
-                💨 ${vientoDir} ${viento} (racha: ${rachaMax})
+            // 🔹 Asignamos color según la probabilidad de lluvia
+            let bgColor = '';
+            if (probPrecip !== null) {
+                if (probPrecip <= 20) bgColor = 'green';
+                else if (probPrecip <= 60) bgColor = 'yellow';
+                else bgColor = 'red';
+            }
+
+            rowContent += `<td class="weather-cell" style="background-color: ${bgColor};">
+                ${estadoCielo ? `🌥️ ${estadoCielo}<br>` : ''}
+                ${maxTemp || minTemp ? `🌡️ ${minTemp} / ${maxTemp}<br>` : ''}
+                ${probPrecip !== null ? `💦 ${probPrecip}%<br>` : ''}
+                ${viento || vientoDir ? `💨 ${vientoDir} ${viento}` : ''} ${rachaMax ? `(racha: ${rachaMax})` : ''}
             </td>`;
         });
 
@@ -183,6 +189,7 @@ async function mostrarPredicciones() {
         tbody.appendChild(row);
     });
 }
+
 
 
 
