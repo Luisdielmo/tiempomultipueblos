@@ -39,8 +39,10 @@ async function agregarMunicipioDesdeURL() {
 
     if (match) {
         const municipio = match[1];
-        const codigo = match[2];
+        const codigo = parseInt(match[2], 10);  // ✅ Convertimos "codigo" a número entero
         const enlace = `https://www.aemet.es/es/eltiempo/prediccion/municipios/${municipio}-id${codigo}`;
+
+        console.log("📡 Enviando a Airtable:", { municipio, codigo, enlace });
 
         try {
             const response = await fetch(AIRTABLE_URL, {
@@ -50,26 +52,32 @@ async function agregarMunicipioDesdeURL() {
                     records: [
                         {
                             fields: {
-                                "municipio": municipio,
-                                "codigo": codigo,
-                                "enlace": enlace
+                                "municipio": municipio,  // 📌 Asegúrate de que el campo coincide con Airtable
+                                "codigo": codigo,        // 📌 Enviado como número (no texto)
+                                "enlace": enlace         // 📌 Enlace correcto
                             }
                         }
                     ]
                 })
             });
 
-            if (!response.ok) throw new Error("Error al guardar en Airtable");
+            const data = await response.json();
+            console.log("📡 Respuesta completa de Airtable:", data);
 
-            mostrarPredicciones();
+            if (!response.ok) {
+                throw new Error(`Error en Airtable: ${JSON.stringify(data)}`);
+            }
+
+            mostrarPredicciones(); // 🔄 Recargar tabla
         } catch (error) {
-            console.error("Error al agregar municipio:", error);
+            console.error("❌ Error al agregar municipio:", error);
         }
     } else {
         alert("URL no válida. Asegúrate de que tiene el formato correcto.");
     }
     document.getElementById('municipio-url').value = '';
 }
+
 
 // 🗑️ Eliminar un municipio
 async function eliminarMunicipio(id) {
