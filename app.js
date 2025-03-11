@@ -104,7 +104,7 @@ async function obtenerPredicciones(codigo) {
     }
 }
 
-// 🌦️ Mostrar predicciones con filtro por Empresa
+// 🌦️ Mostrar predicciones con filtro por Empresa y escala de colores para lluvia
 async function mostrarPredicciones() {
     const thead = document.getElementById('weather-header-row');
     const tbody = document.getElementById('weather-tbody');
@@ -167,10 +167,25 @@ async function mostrarPredicciones() {
                 return;
             }
 
-            rowContent += `<td class="weather-cell">
-                ${dia.estadoCielo?.[0]?.descripcion ? `🌥️ ${dia.estadoCielo[0].descripcion}<br>` : ''}
-                ${dia.temperatura?.maxima ? `🌡️ ${dia.temperatura.minima} / ${dia.temperatura.maxima}°C<br>` : ''}
-                ${dia.probPrecipitacion?.[0]?.value ? `💦 ${dia.probPrecipitacion[0].value}%<br>` : ''}
+            const maxTemp = dia.temperatura?.maxima ? `${dia.temperatura.maxima}°C` : '';
+            const minTemp = dia.temperatura?.minima ? `${dia.temperatura.minima}°C` : '';
+            const estadoCielo = dia.estadoCielo?.[0]?.descripcion || '';
+            const probPrecip = dia.probPrecipitacion?.[0]?.value ? parseInt(dia.probPrecipitacion[0].value) : 0;
+            const viento = dia.vientoAndRachaMax?.velocidad?.[0] ? `${dia.vientoAndRachaMax.velocidad[0]} km/h` : '';
+
+            // 🎨 Escala de colores para la probabilidad de lluvia
+            let bgColor = '#FFFFFF'; // Blanco por defecto
+            if (probPrecip <= 20) bgColor = '#A8E6A3';  // Verde claro
+            else if (probPrecip <= 40) bgColor = '#F7E09C';  // Amarillo claro
+            else if (probPrecip <= 60) bgColor = '#F4B183';  // Naranja suave
+            else if (probPrecip <= 80) bgColor = '#E57373';  // Rojo anaranjado
+            else bgColor = '#D9534F';  // Rojo intenso
+
+            rowContent += `<td class="weather-cell" style="background-color: ${bgColor};">
+                ${estadoCielo ? `🌥️ ${estadoCielo}<br>` : ''}
+                ${maxTemp || minTemp ? `🌡️ ${minTemp} / ${maxTemp}<br>` : ''}
+                ${probPrecip ? `💦 ${probPrecip}%<br>` : ''}
+                ${viento ? `💨 ${viento}` : ''}
             </td>`;
         });
 
@@ -180,6 +195,7 @@ async function mostrarPredicciones() {
         tbody.appendChild(row);
     });
 }
+
 
 document.getElementById('empresa-select').addEventListener('change', mostrarPredicciones);
 document.addEventListener("DOMContentLoaded", mostrarPredicciones);
