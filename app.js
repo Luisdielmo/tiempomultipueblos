@@ -153,10 +153,10 @@ async function mostrarPredicciones() {
 
     const municipios = await obtenerMunicipios();
 
-    const predicciones = await Promise.all(municipios.map(async ({ municipio, codigo, enlace }) => {
+    const predicciones = await Promise.all(municipios.map(async ({ municipio, codigo, enlace, id }) => {
         const data = await obtenerPredicciones(codigo);
-        if (!data || !Array.isArray(data) || !data[0]?.prediccion?.dia) return null;
-        return { municipio, enlace, dias: data[0].prediccion.dia };
+        if (!data || !Array.isArray(data) || !data[0]?.prediccion?.dia) return { municipio, enlace, dias: [], id };
+        return { municipio, enlace, dias: data[0].prediccion.dia, id };
     }));
 
     const diasUnicos = predicciones.filter(Boolean)[0]?.dias.map(d => {
@@ -164,9 +164,9 @@ async function mostrarPredicciones() {
         return `${fecha.toLocaleDateString('es-ES', { weekday: 'short' })} ${fecha.getDate()}`;
     }) || [];
 
-    thead.innerHTML = `<th>Municipio</th>` + diasUnicos.map(d => `<th>${d}</th>`).join('');
+    thead.innerHTML = `<th>Municipio</th>` + diasUnicos.map(d => `<th>${d}</th>`).join('') + `<th>Eliminar</th>`;
 
-    predicciones.filter(Boolean).forEach(({ municipio, enlace, dias }) => {
+    predicciones.forEach(({ municipio, enlace, dias, id }) => {
         const row = document.createElement('tr');
         let rowContent = `<td><a href="${enlace}" target="_blank">${municipio}</a></td>`;
 
@@ -195,10 +195,14 @@ async function mostrarPredicciones() {
             </td>`;
         });
 
+        // 🔥 Nueva columna con botón de eliminar
+        rowContent += `<td><button onclick="eliminarMunicipio('${id}')">❌</button></td>`;
+
         row.innerHTML = rowContent;
         tbody.appendChild(row);
     });
 }
+
 
 
 
