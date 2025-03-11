@@ -1,41 +1,37 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Predicciones Meteorológicas</title>
-  <script src="app.js" defer></script>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicciones Meteorológicas</title>
 </head>
 <body>
-  <h1>Predicciones Meteorológicas</h1>
 
-  <!-- Contenedor para el buscador de municipios -->
-  <div>
-    <h2>Agregar Municipio desde URL</h2>
-    <input type="text" id="municipio-url" placeholder="Pega aquí la URL de AEMET">
+    <h1>Predicciones Meteorológicas</h1>
+
+    <label for="municipio-url">URL del municipio:</label>
+    <input type="text" id="municipio-url" placeholder="Introduce la URL del municipio">
+    
+    <label for="empresa-select">Empresa:</label>
+    <select id="empresa-select">
+        <option value="Todos" selected>Todos</option>
+        <option value="Dielmo">Dielmo</option>
+        <option value="Proyectos Inmersivos">Proyectos Inmersivos</option>
+    </select>
+
     <button onclick="agregarMunicipioDesdeURL()">Agregar Municipio</button>
-  </div>
 
-  <!-- Contenedor para la lista de municipios 
-  <div>
-    <h2>Municipios seleccionados</h2>
-    <div id="municipios-list"></div>
-  </div>
-  -->
-
-  <!-- Tabla para mostrar las predicciones diarias -->
-  <div id="weather-container">
-    <table id="weather-table">
-      <thead>
-        <tr id="weather-header-row">
-          <th>Municipio</th>
-        </tr>
-      </thead>
-      <tbody id="weather-tbody">
-        <!-- Aquí se mostrarán las predicciones -->
-      </tbody>
+    <h2>Predicciones</h2>
+    <table border="1">
+        <thead>
+            <tr id="weather-header-row">
+                <th>Municipio</th>
+                <th>Eliminar</th>
+            </tr>
+        </thead>
+        <tbody id="weather-tbody"></tbody>
     </table>
-  </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
