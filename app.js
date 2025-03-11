@@ -39,7 +39,7 @@ async function agregarMunicipioDesdeURL() {
 
     if (match) {
         const municipio = match[1];
-        const codigo = parseInt(match[2], 10);
+        const codigo = match[2];
         const enlace = `https://www.aemet.es/es/eltiempo/prediccion/municipios/${municipio}-id${codigo}`;
 
         try {
