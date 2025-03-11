@@ -35,13 +35,13 @@ async function obtenerMunicipios() {
 // 📤 Agregar municipio a Airtable
 async function agregarMunicipioDesdeURL() {
     const url = document.getElementById('municipio-url').value.trim();
-    const empresa = document.getElementById('empresa-select').value; // ✅ Obtener empresa seleccionada
+    const empresa = document.getElementById('empresa-select').value;
     const regex = /\/municipios\/([a-zA-Z0-9-]+)-id(\d+)/;
     const match = url.match(regex);
 
     if (match) {
         const municipio = match[1];
-        const codigo = match[2];  // ✅ Mantener "codigo" como texto
+        const codigo = match[2];
         const enlace = `https://www.aemet.es/es/eltiempo/prediccion/municipios/${municipio}-id${codigo}`;
 
         console.log("📡 Enviando a Airtable:", { municipio, codigo, enlace, empresa });
@@ -54,10 +54,10 @@ async function agregarMunicipioDesdeURL() {
                     records: [
                         {
                             fields: {
-                                "municipio": municipio,  
-                                "codigo": codigo,        
+                                "municipio": municipio,
+                                "codigo": codigo,
                                 "enlace": enlace,
-                                "Empresa": empresa      // ✅ Guardar empresa en Airtable
+                                "Empresa": empresa
                             }
                         }
                     ]
@@ -71,7 +71,7 @@ async function agregarMunicipioDesdeURL() {
                 throw new Error(`Error en Airtable: ${JSON.stringify(data)}`);
             }
 
-            mostrarPredicciones(); // 🔄 Recargar la tabla con el nuevo registro
+            mostrarPredicciones();
         } catch (error) {
             console.error("❌ Error al agregar municipio:", error);
         }
@@ -97,13 +97,41 @@ async function eliminarMunicipio(id) {
     }
 }
 
+// 📡 Obtener predicciones de AEMET
+async function obtenerPredicciones(codigo) {
+    try {
+        const apiKey = 'TU_API_KEY_DE_AEMET';
+        const baseUrl = `https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/${codigo}/?api_key=${apiKey}`;
+
+        console.log(`📡 Solicitando predicciones para código: ${codigo}`);
+
+        const response = await fetch(baseUrl);
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+
+        const data = await response.json();
+        if (!data || !data.datos) return null;
+
+        const weatherResponse = await fetch(data.datos);
+        if (!weatherResponse.ok) throw new Error(`Error HTTP en datos: ${weatherResponse.status}`);
+
+        const weatherData = await weatherResponse.json();
+
+        if (!Array.isArray(weatherData)) return null;
+
+        return weatherData;
+    } catch (error) {
+        console.warn(`⚠️ Error obteniendo predicciones para ${codigo}:`, error);
+        return null;
+    }
+}
+
 // 🌦️ Mostrar predicciones con filtro por Empresa
 async function mostrarPredicciones() {
     const thead = document.getElementById('weather-header-row');
     const tbody = document.getElementById('weather-tbody');
     tbody.innerHTML = '';
 
-    const empresaSeleccionada = document.getElementById('empresa-select').value; // ✅ Obtener empresa seleccionada
+    const empresaSeleccionada = document.getElementById('empresa-select').value;
 
     const municipios = await obtenerMunicipios();
 
@@ -112,19 +140,57 @@ async function mostrarPredicciones() {
         return empresaSeleccionada === "Todos" || empresa === empresaSeleccionada;
     });
 
-    municipiosFiltrados.forEach(({ municipio, enlace, id }) => {
+    const predicciones = await Promise.all(municipiosFiltrados.map(async ({ municipio, codigo, enlace, id }) => {
+        const data = await obtenerPredicciones(codigo);
+        if (!data || !Array.isArray(data) || !data[0]?.prediccion?.dia) {
+            console.warn(`⚠️ No hay datos de predicción para ${municipio} (${codigo}). Mostrando fila vacía.`);
+            return { municipio, enlace, dias: [], id };
+        }
+        return { municipio, enlace, dias: data[0].prediccion.dia, id };
+    }));
+
+    const diasUnicos = predicciones.filter(Boolean)[0]?.dias.map(d => {
+        const fecha = new Date(d.fecha);
+        return `${fecha.toLocaleDateString('es-ES', { weekday: 'short' })} ${fecha.getDate()}`;
+    }) || [];
+
+    thead.innerHTML = `<th>Municipio</th>` + diasUnicos.map(d => `<th>${d}</th>`).join('') + `<th>Eliminar</th>`;
+
+    predicciones.forEach(({ municipio, enlace, dias, id }) => {
         const row = document.createElement('tr');
         let rowContent = `<td><a href="${enlace}" target="_blank">${municipio}</a></td>`;
-        rowContent += `<td><button onclick="eliminarMunicipio('${id}')">❌</button></td>`;
+
+        dias.forEach(dia => {
+            const maxTemp = dia.temperatura?.maxima ? `${dia.temperatura.maxima}°C` : '';
+            const minTemp = dia.temperatura?.minima ? `${dia.temperatura.minima}°C` : '';
+            const estadoCielo = dia.estadoCielo?.[0]?.descripcion || '';
+            const probPrecip = dia.probPrecipitacion?.[0]?.value ? `${dia.probPrecipitacion[0].value}%` : '';
+            const viento = dia.vientoAndRachaMax?.velocidad?.[0] ? `${dia.vientoAndRachaMax.velocidad[0]} km/h` : '';
+            const vientoDir = dia.vientoAndRachaMax?.direccion?.[0] || '';
+            const rachaMax = dia.vientoAndRachaMax?.value ? `${dia.vientoAndRachaMax.value} km/h` : '';
+
+            let bgColor = '';
+            if (probPrecip) {
+                const porcentaje = parseInt(probPrecip);
+                if (porcentaje <= 20) bgColor = 'green';
+                else if (porcentaje <= 60) bgColor = 'yellow';
+                else bgColor = 'red';
+            }
+
+            rowContent += `<td class="weather-cell" style="background-color: ${bgColor};">
+                ${estadoCielo ? `🌥️ ${estadoCielo}<br>` : ''}
+                ${maxTemp || minTemp ? `🌡️ ${minTemp} / ${maxTemp}<br>` : ''}
+                ${probPrecip ? `💦 ${probPrecip}<br>` : ''}
+                ${viento || vientoDir ? `💨 ${vientoDir} ${viento}` : ''} ${rachaMax ? `(racha: ${rachaMax})` : ''}
+            </td>`;
+        });
+
+        rowContent += `<td><button class="delete-btn" onclick="eliminarMunicipio('${id}')">❌</button></td>`;
+
         row.innerHTML = rowContent;
         tbody.appendChild(row);
     });
 }
 
-// 🔄 Aplicar filtro cuando se cambie la selección en el combo
 document.getElementById('empresa-select').addEventListener('change', mostrarPredicciones);
-
-// 🔄 Cargar predicciones al iniciar
-document.addEventListener("DOMContentLoaded", () => {
-    mostrarPredicciones();
-});
+document.addEventListener("DOMContentLoaded", mostrarPredicciones);
