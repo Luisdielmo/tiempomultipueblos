@@ -39,7 +39,7 @@ async function agregarMunicipioDesdeURL() {
 
     if (match) {
         const municipio = match[1];
-        const codigo = match[2];
+        const codigo = match[2].trim();
         const enlace = `https://www.aemet.es/es/eltiempo/prediccion/municipios/${municipio}-id${codigo}`;
 
         console.log("📡 Enviando a Airtable:", { municipio, codigo, enlace });
