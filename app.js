@@ -9,27 +9,54 @@ const headers = {
     "Content-Type": "application/json"
 };
 
-// 📥 Obtener municipios desde Airtable
-async function obtenerMunicipios() {
-    try {
-        const response = await fetch(AIRTABLE_URL, { headers });
-        const data = await response.json();
+// 📤 Agregar municipio a Airtable
+function agregarMunicipioDesdeURL() {
+    const url = document.getElementById('municipio-url').value.trim();
+    const empresa = document.getElementById('empresa-select').value;
+    const regex = /\/municipios\/([a-zA-Z0-9-]+)-id(\d+)/;
+    const match = url.match(regex);
 
-        if (!data.records) {
-            throw new Error("No se encontraron registros en Airtable.");
+    if (match) {
+        const municipio = match[1];
+        let codigo = match[2].trim(); // ✅ Asegurar que "codigo" es texto y eliminar espacios
+
+        if (!codigo) { // ❌ Si el código está vacío, mostrar error y no enviar nada
+            console.error("❌ Error: El código del municipio está vacío.");
+            alert("Error: El código del municipio no puede estar vacío.");
+            return;
         }
 
-        return data.records.map(record => ({
-            id: record.id,
-            municipio: record.fields.municipio,
-            codigo: record.fields.codigo,
-            enlace: record.fields.enlace,
-            empresa: record.fields.Empresa || "Todos"
-        }));
-    } catch (error) {
-        console.error("Error obteniendo municipios desde Airtable:", error);
-        return [];
+        const enlace = `https://www.aemet.es/es/eltiempo/prediccion/municipios/${municipio}-id${codigo}`;
+
+        console.log("📡 Enviando a Airtable:", { municipio, codigo, enlace, empresa });
+
+        fetch(AIRTABLE_URL, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+                records: [
+                    {
+                        fields: {
+                            "municipio": municipio,
+                            "codigo": codigo, // ✅ Enviar como texto limpio
+                            "enlace": enlace,
+                            "Empresa": empresa
+                        }
+                    }
+                ]
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("📡 Respuesta completa de Airtable:", data);
+            if (data.error) throw new Error(`Error en Airtable: ${JSON.stringify(data)}`);
+            mostrarPredicciones();
+        })
+        .catch(error => console.error("❌ Error al agregar municipio:", error));
+    } else {
+        alert("URL no válida. Asegúrate de que tiene el formato correcto.");
     }
+    document.getElementById('municipio-url').value = '';
 }
 
 // 📡 Obtener predicciones de AEMET
@@ -68,9 +95,22 @@ async function mostrarPredicciones() {
 
     const empresaSeleccionada = document.getElementById('empresa-select').value;
 
-    const municipios = await obtenerMunicipios();
+    const response = await fetch(AIRTABLE_URL, { headers });
+    const data = await response.json();
 
-    // 🔍 Filtrar registros según la empresa seleccionada
+    if (!data.records) {
+        console.error("No se encontraron registros en Airtable.");
+        return;
+    }
+
+    const municipios = data.records.map(record => ({
+        id: record.id,
+        municipio: record.fields.municipio,
+        codigo: record.fields.codigo,
+        enlace: record.fields.enlace,
+        empresa: record.fields.Empresa || "Todos"
+    }));
+
     const municipiosFiltrados = municipios.filter(({ empresa }) => {
         return empresaSeleccionada === "Todos" || empresa === empresaSeleccionada;
     });
@@ -91,12 +131,10 @@ async function mostrarPredicciones() {
             const fecha = new Date(d.fecha);
             return `${fecha.toLocaleDateString('es-ES', { weekday: 'short' })} ${fecha.getDate()}`;
         })
-        .filter((v, i, a) => a.indexOf(v) === i); // 🔍 Evitar duplicados
+        .filter((v, i, a) => a.indexOf(v) === i);
 
-    // 🔄 Actualizar el encabezado de la tabla con los días de la predicción
     thead.innerHTML = `<th>Municipio</th>` + diasUnicos.map(d => `<th>${d}</th>`).join('') + `<th>Eliminar</th>`;
 
-    // 🔄 Generar las filas de la tabla
     predicciones.forEach(({ municipio, enlace, dias, id }) => {
         const row = document.createElement('tr');
         let rowContent = `<td><a href="${enlace}" target="_blank">${municipio}</a></td>`;
@@ -112,27 +150,10 @@ async function mostrarPredicciones() {
                 return;
             }
 
-            const maxTemp = dia.temperatura?.maxima ? `${dia.temperatura.maxima}°C` : '';
-            const minTemp = dia.temperatura?.minima ? `${dia.temperatura.minima}°C` : '';
-            const estadoCielo = dia.estadoCielo?.[0]?.descripcion || '';
-            const probPrecip = dia.probPrecipitacion?.[0]?.value ? `${dia.probPrecipitacion[0].value}%` : '';
-            const viento = dia.vientoAndRachaMax?.velocidad?.[0] ? `${dia.vientoAndRachaMax.velocidad[0]} km/h` : '';
-            const vientoDir = dia.vientoAndRachaMax?.direccion?.[0] || '';
-            const rachaMax = dia.vientoAndRachaMax?.value ? `${dia.vientoAndRachaMax.value} km/h` : '';
-
-            let bgColor = '';
-            if (probPrecip) {
-                const porcentaje = parseInt(probPrecip);
-                if (porcentaje <= 20) bgColor = 'green';
-                else if (porcentaje <= 60) bgColor = 'yellow';
-                else bgColor = 'red';
-            }
-
-            rowContent += `<td class="weather-cell" style="background-color: ${bgColor};">
-                ${estadoCielo ? `🌥️ ${estadoCielo}<br>` : ''}
-                ${maxTemp || minTemp ? `🌡️ ${minTemp} / ${maxTemp}<br>` : ''}
-                ${probPrecip ? `💦 ${probPrecip}<br>` : ''}
-                ${viento || vientoDir ? `💨 ${vientoDir} ${viento}` : ''} ${rachaMax ? `(racha: ${rachaMax})` : ''}
+            rowContent += `<td class="weather-cell">
+                ${dia.estadoCielo?.[0]?.descripcion ? `🌥️ ${dia.estadoCielo[0].descripcion}<br>` : ''}
+                ${dia.temperatura?.maxima ? `🌡️ ${dia.temperatura.minima} / ${dia.temperatura.maxima}°C<br>` : ''}
+                ${dia.probPrecipitacion?.[0]?.value ? `💦 ${dia.probPrecipitacion[0].value}%<br>` : ''}
             </td>`;
         });
 
@@ -143,8 +164,5 @@ async function mostrarPredicciones() {
     });
 }
 
-// 🔄 Aplicar filtro cuando se cambie la selección en el combo
 document.getElementById('empresa-select').addEventListener('change', mostrarPredicciones);
-
-// 🔄 Cargar predicciones al iniciar
 document.addEventListener("DOMContentLoaded", mostrarPredicciones);
