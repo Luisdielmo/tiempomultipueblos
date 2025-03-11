@@ -52,9 +52,9 @@ async function agregarMunicipioDesdeURL() {
                     records: [
                         {
                             fields: {
-                                "municipio": municipio,  // 📌 Asegúrate de que el campo coincide con Airtable
-                                "codigo": codigo,        // 📌 Enviado como número (no texto)
-                                "enlace": enlace         // 📌 Enlace correcto
+                                "municipio": municipio,  
+                                "codigo": codigo,        
+                                "enlace": enlace         
                             }
                         }
                     ]
@@ -62,13 +62,13 @@ async function agregarMunicipioDesdeURL() {
             });
 
             const data = await response.json();
-            console.log("📡 Respuesta completa de Airtable:", data);
+            console.log("📡 Respuesta completa de Airtable:", data);  // 🔍 Esto nos dirá el error exacto
 
             if (!response.ok) {
                 throw new Error(`Error en Airtable: ${JSON.stringify(data)}`);
             }
 
-            mostrarPredicciones(); // 🔄 Recargar tabla
+            mostrarPredicciones();
         } catch (error) {
             console.error("❌ Error al agregar municipio:", error);
         }
@@ -77,6 +77,7 @@ async function agregarMunicipioDesdeURL() {
     }
     document.getElementById('municipio-url').value = '';
 }
+
 
 
 // 🗑️ Eliminar un municipio
