@@ -8,6 +8,23 @@ const headers = {
     "Authorization": `Bearer ${AIRTABLE_API_KEY}`,
     "Content-Type": "application/json"
 };
+// 🗑️ Eliminar un municipio de Airtable
+function eliminarMunicipio(id) {
+    console.log(`🗑️ Eliminando municipio con ID: ${id}`);
+
+    fetch(`${AIRTABLE_URL}/${id}`, {
+        method: "DELETE",
+        headers
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Error al eliminar en Airtable");
+        console.log("✅ Municipio eliminado correctamente.");
+        mostrarPredicciones(); // 🔄 Recargar la tabla después de eliminar
+    })
+    .catch(error => console.error("❌ Error eliminando municipio:", error));
+
+
+
 
 // 📤 Agregar municipio a Airtable
 function agregarMunicipioDesdeURL() {
