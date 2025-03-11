@@ -39,7 +39,7 @@ async function agregarMunicipioDesdeURL() {
 
     if (match) {
         const municipio = match[1];
-        const codigo = parseInt(match[2], 10);  // ✅ Convertimos "codigo" a número entero
+        const codigo = parseInt(match[2], 10);
         const enlace = `https://www.aemet.es/es/eltiempo/prediccion/municipios/${municipio}-id${codigo}`;
 
         console.log("📡 Enviando a Airtable:", { municipio, codigo, enlace });
@@ -52,9 +52,9 @@ async function agregarMunicipioDesdeURL() {
                     records: [
                         {
                             fields: {
-                                "municipio": municipio,  
-                                "codigo": codigo,        
-                                "enlace": enlace         
+                                "municipio": municipio,
+                                "codigo": codigo,
+                                "enlace": enlace
                             }
                         }
                     ]
@@ -62,7 +62,7 @@ async function agregarMunicipioDesdeURL() {
             });
 
             const data = await response.json();
-            console.log("📡 Respuesta completa de Airtable:", data);  // 🔍 Esto nos dirá el error exacto
+            console.log("📡 Respuesta completa de Airtable:", data);
 
             if (!response.ok) {
                 throw new Error(`Error en Airtable: ${JSON.stringify(data)}`);
@@ -77,8 +77,6 @@ async function agregarMunicipioDesdeURL() {
     }
     document.getElementById('municipio-url').value = '';
 }
-
-
 
 // 🗑️ Eliminar un municipio
 async function eliminarMunicipio(id) {
@@ -101,6 +99,8 @@ async function obtenerPredicciones(codigo) {
     try {
         const apiKey = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsdWlzQGRpZWxtby5jb20iLCJqdGkiOiJjMzcwM2RhMy01ZjZhLTRiNWItODU4OS1hYmE3YWYxYmRlZDUiLCJpc3MiOiJBRU1FVCIsImlhdCI6MTczMjcxOTIxMSwidXNlcklkIjoiYzM3MDNkYTMtNWY2YS00YjViLTg1ODktYWJhN2FmMWJkZWQ1Iiwicm9sZSI6IiJ9.VgdhLRbZQc9BzO0sisvLboljXfiHTBtNk2sHDB5Akqo';
         const baseUrl = `https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/${codigo}/?api_key=${apiKey}`;
+
+        console.log(`📡 Solicitando predicciones para código: ${codigo}`);
 
         const response = await fetch(baseUrl);
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
