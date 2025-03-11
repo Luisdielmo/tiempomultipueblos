@@ -1,7 +1,7 @@
 // 🔐 Configuración de Airtable
 const AIRTABLE_API_KEY = 'patpxayIzoDLxxdbk.9d837d4a744af0b50398dae5404a7c91cab7c37b1f1c90ab7294edf8d441f31c';
-const BASE_ID = 'appkO3Axi0b1J1khK';  // Base ID corregido
-const TABLE_ID = 'tblvx6MXJ7HtzQZbK';  // ID de la tabla
+const BASE_ID = 'appkO3Axi0b1J1khK';
+const TABLE_ID = 'tblvx6MXJ7HtzQZbK';
 const AIRTABLE_URL = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`;
 
 const headers = {
@@ -15,24 +15,21 @@ async function obtenerMunicipios() {
         const response = await fetch(AIRTABLE_URL, { headers });
         const data = await response.json();
 
-        console.log("Respuesta de Airtable en obtenerMunicipios:", data); // 🔍 Debugging
-
         if (!data.records) {
             throw new Error("No se encontraron registros en Airtable.");
         }
 
         return data.records.map(record => ({
             id: record.id,
-            municipio: record.fields.municipio,  // ✅ Ahora coincide con Airtable
-            codigo: record.fields.codigo,        // ✅ Ahora coincide con Airtable
-            enlace: record.fields.enlace         // ✅ Ahora coincide con Airtable
+            municipio: record.fields.municipio,
+            codigo: record.fields.codigo,
+            enlace: record.fields.enlace
         }));
     } catch (error) {
         console.error("Error obteniendo municipios desde Airtable:", error);
         return [];
     }
 }
-
 
 // 📤 Agregar municipio a Airtable
 async function agregarMunicipioDesdeURL() {
@@ -42,10 +39,8 @@ async function agregarMunicipioDesdeURL() {
 
     if (match) {
         const municipio = match[1];
-        const codigo = match[2];  // ✅ Convertimos "codigo" a número entero
+        const codigo = parseInt(match[2], 10);
         const enlace = `https://www.aemet.es/es/eltiempo/prediccion/municipios/${municipio}-id${codigo}`;
-
-        console.log("Enviando a Airtable:", { municipio, codigo, enlace });
 
         try {
             const response = await fetch(AIRTABLE_URL, {
@@ -55,23 +50,18 @@ async function agregarMunicipioDesdeURL() {
                     records: [
                         {
                             fields: {
-                                "municipio": municipio,  // 📌 Asegúrate de que los nombres coincidan con Airtable
-                                "codigo": codigo,        // 📌 Se envía como número entero (no texto)
-                                "enlace": enlace         // 📌 URL del municipio en AEMET
+                                "municipio": municipio,
+                                "codigo": codigo,
+                                "enlace": enlace
                             }
                         }
                     ]
                 })
             });
 
-            const data = await response.json();
-            console.log("Respuesta completa de Airtable:", data);
+            if (!response.ok) throw new Error("Error al guardar en Airtable");
 
-            if (!response.ok) {
-                throw new Error(`Error en Airtable: ${JSON.stringify(data)}`);
-            }
-
-            mostrarMunicipios(); // Recargar la lista
+            mostrarPredicciones();
         } catch (error) {
             console.error("Error al agregar municipio:", error);
         }
@@ -80,7 +70,6 @@ async function agregarMunicipioDesdeURL() {
     }
     document.getElementById('municipio-url').value = '';
 }
-
 
 // 🗑️ Eliminar un municipio
 async function eliminarMunicipio(id) {
@@ -92,60 +81,34 @@ async function eliminarMunicipio(id) {
 
         if (!response.ok) throw new Error("Error al eliminar en Airtable");
 
-        mostrarMunicipios(); // Recargar la lista
+        mostrarPredicciones();
     } catch (error) {
         console.error("Error eliminando municipio:", error);
     }
 }
 
-// 🖥️ Mostrar municipios en la interfaz
-async function mostrarMunicipios() {
-    const container = document.getElementById('municipios-list');
-    container.innerHTML = '';
-
-    const municipios = await obtenerMunicipios();
-    
-    municipios.forEach(({ id, municipio, enlace }) => {
-        const div = document.createElement('div');
-        div.innerHTML = `<a href="${enlace}" target="_blank">${municipio}</a> 
-            <button onclick="eliminarMunicipio('${id}')">Eliminar</button>`;
-        container.appendChild(div);
-    });
-
-    mostrarPredicciones(); // Recargar predicciones con la nueva lista
-}
-
+// 📡 Obtener predicciones de AEMET
 async function obtenerPredicciones(codigo) {
     try {
         const apiKey = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsdWlzQGRpZWxtby5jb20iLCJqdGkiOiJjMzcwM2RhMy01ZjZhLTRiNWItODU4OS1hYmE3YWYxYmRlZDUiLCJpc3MiOiJBRU1FVCIsImlhdCI6MTczMjcxOTIxMSwidXNlcklkIjoiYzM3MDNkYTMtNWY2YS00YjViLTg1ODktYWJhN2FmMWJkZWQ1Iiwicm9sZSI6IiJ9.VgdhLRbZQc9BzO0sisvLboljXfiHTBtNk2sHDB5Akqo';
         const baseUrl = `https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/${codigo}/?api_key=${apiKey}`;
-
-        console.log(`Solicitando predicciones para código: ${codigo}`);
-
+        
         const response = await fetch(baseUrl);
         const data = await response.json();
-
-        if (!data || !data.datos) {
-            console.warn(`❌ No se encontró la URL de los datos para ${codigo}`);
-            return null;  // 📌 Evitamos que falle el código
-        }
+        
+        if (!data || !data.datos) return null;
 
         const weatherResponse = await fetch(data.datos);
         const weatherData = await weatherResponse.json();
 
-        if (!Array.isArray(weatherData)) {
-            console.warn(`⚠️ Respuesta inesperada de AEMET para ${codigo}:`, weatherData);
-            return null;  // 📌 Si no es un array, evitamos que falle
-        }
-
         return weatherData;
     } catch (error) {
-        console.error(`❌ Error obteniendo predicciones para ${codigo}:`, error);
+        console.error(`Error obteniendo predicciones para ${codigo}:`, error);
         return null;
     }
 }
 
-
+// 🌦️ Mostrar predicciones en la tabla
 async function mostrarPredicciones() {
     const thead = document.getElementById('weather-header-row');
     const tbody = document.getElementById('weather-tbody');
@@ -179,7 +142,6 @@ async function mostrarPredicciones() {
             const vientoDir = dia.vientoAndRachaMax?.direccion?.[0] || '';
             const rachaMax = dia.vientoAndRachaMax?.value ? `${dia.vientoAndRachaMax.value} km/h` : '';
 
-            // 🔹 Asignamos color según la probabilidad de lluvia
             let bgColor = '';
             if (probPrecip !== null) {
                 if (probPrecip <= 20) bgColor = 'green';
@@ -195,7 +157,6 @@ async function mostrarPredicciones() {
             </td>`;
         });
 
-        // 🔥 Nueva columna con botón de eliminar
         rowContent += `<td><button onclick="eliminarMunicipio('${id}')">❌</button></td>`;
 
         row.innerHTML = rowContent;
@@ -203,11 +164,6 @@ async function mostrarPredicciones() {
     });
 }
 
-
-
-
-
-// Cargar municipios al iniciar la página
 document.addEventListener("DOMContentLoaded", () => {
-    mostrarMunicipios();  // 📡 Carga inicial desde Airtable
+    mostrarPredicciones();
 });
