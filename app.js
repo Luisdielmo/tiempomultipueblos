@@ -1,5 +1,5 @@
 // 🔐 Configuración de Airtable
-const AIRTABLE_API_KEY = 'TU_API_KEY_AQUI';
+const AIRTABLE_API_KEY = 'patpxayIzoDLxxdbk.9d837d4a744af0b50398dae5404a7c91cab7c37b1f1c90ab7294edf8d441f31c';
 const BASE_ID = 'appkO3Axi0b1J1khK';
 const TABLE_ID = 'tblvx6MXJ7HtzQZbK';
 const AIRTABLE_URL = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`;
@@ -35,7 +35,7 @@ async function obtenerMunicipios() {
 // 📡 Obtener predicciones de AEMET
 async function obtenerPredicciones(codigo) {
     try {
-        const apiKey = 'TU_API_KEY_AQUI';
+        const apiKey = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsdWlzQGRpZWxtby5jb20iLCJqdGkiOiJjMzcwM2RhMy01ZjZhLTRiNWItODU4OS1hYmE3YWYxYmRlZDUiLCJpc3MiOiJBRU1FVCIsImlhdCI6MTczMjcxOTIxMSwidXNlcklkIjoiYzM3MDNkYTMtNWY2YS00YjViLTg1ODktYWJhN2FmMWJkZWQ1Iiwicm9sZSI6IiJ9.VgdhLRbZQc9BzO0sisvLboljXfiHTBtNk2sHDB5Akqo';
         const baseUrl = `https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/${codigo}/?api_key=${apiKey}`;
 
         console.log(`📡 Solicitando predicciones para código: ${codigo}`);
@@ -44,7 +44,7 @@ async function obtenerPredicciones(codigo) {
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
 
         const data = await response.json();
-        if (!data || !data.datos) return null;
+        if (!data || !data.datos) throw new Error(`No se encontraron datos para ${codigo}`);
 
         const weatherResponse = await fetch(data.datos);
         if (!weatherResponse.ok) throw new Error(`Error HTTP en datos: ${weatherResponse.status}`);
@@ -84,7 +84,6 @@ async function mostrarPredicciones() {
         return { municipio, enlace, dias: data[0].prediccion.dia, id };
     }));
 
-    // 📌 Obtener los días únicos de la predicción
     const diasUnicos = predicciones
         .filter(Boolean)
         .flatMap(p => p.dias)
@@ -137,7 +136,6 @@ async function mostrarPredicciones() {
             </td>`;
         });
 
-        // 🔥 Agregar botón de eliminar
         rowContent += `<td><button class="delete-btn" onclick="eliminarMunicipio('${id}')">❌</button></td>`;
 
         row.innerHTML = rowContent;
