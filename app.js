@@ -92,18 +92,23 @@ async function obtenerPredicciones(codigo) {
     try {
         const apiKey = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsdWlzQGRpZWxtby5jb20iLCJqdGkiOiJjMzcwM2RhMy01ZjZhLTRiNWItODU4OS1hYmE3YWYxYmRlZDUiLCJpc3MiOiJBRU1FVCIsImlhdCI6MTczMjcxOTIxMSwidXNlcklkIjoiYzM3MDNkYTMtNWY2YS00YjViLTg1ODktYWJhN2FmMWJkZWQ1Iiwicm9sZSI6IiJ9.VgdhLRbZQc9BzO0sisvLboljXfiHTBtNk2sHDB5Akqo';
         const baseUrl = `https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/${codigo}/?api_key=${apiKey}`;
-        
+
         const response = await fetch(baseUrl);
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+
         const data = await response.json();
-        
         if (!data || !data.datos) return null;
 
         const weatherResponse = await fetch(data.datos);
+        if (!weatherResponse.ok) throw new Error(`Error HTTP en datos: ${weatherResponse.status}`);
+
         const weatherData = await weatherResponse.json();
+
+        if (!Array.isArray(weatherData)) return null;
 
         return weatherData;
     } catch (error) {
-        console.error(`Error obteniendo predicciones para ${codigo}:`, error);
+        console.warn(`⚠️ Error obteniendo predicciones para ${codigo}:`, error);
         return null;
     }
 }
