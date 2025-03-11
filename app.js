@@ -22,7 +22,7 @@ function eliminarMunicipio(id) {
         mostrarPredicciones(); // 🔄 Recargar la tabla después de eliminar
     })
     .catch(error => console.error("❌ Error eliminando municipio:", error));
-
+}
 
 
 
