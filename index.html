@@ -4,25 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Predicciones Meteorológicas</title>
+    <link rel="stylesheet" href="styles.css"> <!-- ✅ Se enlaza el CSS -->
 </head>
 <body>
 
+<div class="container">
     <h1>Predicciones Meteorológicas</h1>
 
-    <label for="municipio-url">URL del municipio:</label>
-    <input type="text" id="municipio-url" placeholder="Introduce la URL del municipio">
-    
-    <label for="empresa-select">Empresa:</label>
-    <select id="empresa-select">
-        <option value="Todos" selected>Todos</option>
-        <option value="Dielmo">Dielmo</option>
-        <option value="Proyectos Inmersivos">Proyectos Inmersivos</option>
-    </select>
+    <!-- Formulario para agregar municipios -->
+    <div class="form-group">
+        <label for="municipio-url">URL del municipio:</label>
+        <input type="text" id="municipio-url" placeholder="Introduce la URL del municipio">
+        
+        <label for="empresa-select">Empresa:</label>
+        <select id="empresa-select">
+            <option value="Todos" selected>Todos</option>
+            <option value="Dielmo">Dielmo</option>
+            <option value="Proyectos Inmersivos">Proyectos Inmersivos</option>
+        </select>
 
-    <button onclick="agregarMunicipioDesdeURL()">Agregar Municipio</button>
+        <button onclick="agregarMunicipioDesdeURL()">Agregar Municipio</button>
+    </div>
 
     <h2>Predicciones</h2>
-    <table border="1">
+
+    <!-- Tabla de predicciones -->
+    <table>
         <thead>
             <tr id="weather-header-row">
                 <th>Municipio</th>
@@ -31,7 +38,9 @@
         </thead>
         <tbody id="weather-tbody"></tbody>
     </table>
+</div>
 
-    <script src="app.js"></script>
+<script src="app.js"></script>
+
 </body>
 </html>
