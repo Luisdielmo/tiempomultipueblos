@@ -1,5 +1,5 @@
 // 🔐 Configuración de Airtable
-const AIRTABLE_API_KEY = 'patpxayIzoDLxxdbk.9d837d4a744af0b50398dae5404a7c91cab7c37b1f1c90ab7294edf8d441f31c';
+const AIRTABLE_API_KEY = 'TU_API_KEY_AQUI';
 const BASE_ID = 'appkO3Axi0b1J1khK';
 const TABLE_ID = 'tblvx6MXJ7HtzQZbK';
 const AIRTABLE_URL = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`;
@@ -32,75 +32,10 @@ async function obtenerMunicipios() {
     }
 }
 
-// 📤 Agregar municipio a Airtable
-async function agregarMunicipioDesdeURL() {
-    const url = document.getElementById('municipio-url').value.trim();
-    const empresa = document.getElementById('empresa-select').value;
-    const regex = /\/municipios\/([a-zA-Z0-9-]+)-id(\d+)/;
-    const match = url.match(regex);
-
-    if (match) {
-        const municipio = match[1];
-        const codigo = match[2];
-        const enlace = `https://www.aemet.es/es/eltiempo/prediccion/municipios/${municipio}-id${codigo}`;
-
-        console.log("📡 Enviando a Airtable:", { municipio, codigo, enlace, empresa });
-
-        try {
-            const response = await fetch(AIRTABLE_URL, {
-                method: "POST",
-                headers,
-                body: JSON.stringify({
-                    records: [
-                        {
-                            fields: {
-                                "municipio": municipio,
-                                "codigo": codigo,
-                                "enlace": enlace,
-                                "Empresa": empresa
-                            }
-                        }
-                    ]
-                })
-            });
-
-            const data = await response.json();
-            console.log("📡 Respuesta completa de Airtable:", data);
-
-            if (!response.ok) {
-                throw new Error(`Error en Airtable: ${JSON.stringify(data)}`);
-            }
-
-            mostrarPredicciones();
-        } catch (error) {
-            console.error("❌ Error al agregar municipio:", error);
-        }
-    } else {
-        alert("URL no válida. Asegúrate de que tiene el formato correcto.");
-    }
-    document.getElementById('municipio-url').value = '';
-}
-
-// 🗑️ Eliminar un municipio
-async function eliminarMunicipio(id) {
-    try {
-        const response = await fetch(`${AIRTABLE_URL}/${id}`, {
-            method: "DELETE",
-            headers
-        });
-
-        if (!response.ok) throw new Error("Error al eliminar en Airtable");
-
-        mostrarPredicciones();
-    } catch (error) {
-        console.error("Error eliminando municipio:", error);
-    }
-}
-
 // 📡 Obtener predicciones de AEMET
 async function obtenerPredicciones(codigo) {
     try {
-        const apiKey = 'TU_API_KEY_DE_AEMET';
+        const apiKey = 'TU_API_KEY_AQUI';
         const baseUrl = `https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/diaria/${codigo}/?api_key=${apiKey}`;
 
         console.log(`📡 Solicitando predicciones para código: ${codigo}`);
@@ -149,18 +84,35 @@ async function mostrarPredicciones() {
         return { municipio, enlace, dias: data[0].prediccion.dia, id };
     }));
 
-    const diasUnicos = predicciones.filter(Boolean)[0]?.dias.map(d => {
-        const fecha = new Date(d.fecha);
-        return `${fecha.toLocaleDateString('es-ES', { weekday: 'short' })} ${fecha.getDate()}`;
-    }) || [];
+    // 📌 Obtener los días únicos de la predicción
+    const diasUnicos = predicciones
+        .filter(Boolean)
+        .flatMap(p => p.dias)
+        .map(d => {
+            const fecha = new Date(d.fecha);
+            return `${fecha.toLocaleDateString('es-ES', { weekday: 'short' })} ${fecha.getDate()}`;
+        })
+        .filter((v, i, a) => a.indexOf(v) === i); // 🔍 Evitar duplicados
 
+    // 🔄 Actualizar el encabezado de la tabla con los días de la predicción
     thead.innerHTML = `<th>Municipio</th>` + diasUnicos.map(d => `<th>${d}</th>`).join('') + `<th>Eliminar</th>`;
 
+    // 🔄 Generar las filas de la tabla
     predicciones.forEach(({ municipio, enlace, dias, id }) => {
         const row = document.createElement('tr');
         let rowContent = `<td><a href="${enlace}" target="_blank">${municipio}</a></td>`;
 
-        dias.forEach(dia => {
+        diasUnicos.forEach(diaRef => {
+            const dia = dias.find(d => {
+                const fecha = new Date(d.fecha);
+                return `${fecha.toLocaleDateString('es-ES', { weekday: 'short' })} ${fecha.getDate()}` === diaRef;
+            });
+
+            if (!dia) {
+                rowContent += `<td class="weather-cell">-</td>`;
+                return;
+            }
+
             const maxTemp = dia.temperatura?.maxima ? `${dia.temperatura.maxima}°C` : '';
             const minTemp = dia.temperatura?.minima ? `${dia.temperatura.minima}°C` : '';
             const estadoCielo = dia.estadoCielo?.[0]?.descripcion || '';
@@ -185,6 +137,7 @@ async function mostrarPredicciones() {
             </td>`;
         });
 
+        // 🔥 Agregar botón de eliminar
         rowContent += `<td><button class="delete-btn" onclick="eliminarMunicipio('${id}')">❌</button></td>`;
 
         row.innerHTML = rowContent;
@@ -192,5 +145,8 @@ async function mostrarPredicciones() {
     });
 }
 
+// 🔄 Aplicar filtro cuando se cambie la selección en el combo
 document.getElementById('empresa-select').addEventListener('change', mostrarPredicciones);
+
+// 🔄 Cargar predicciones al iniciar
 document.addEventListener("DOMContentLoaded", mostrarPredicciones);
